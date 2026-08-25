@@ -1,0 +1,11 @@
+[package]
+name = "zmq-poc-smoke"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+zmq-poc-proto = { workspace = true }
+zmq-poc-publisher = { path = "../publisher" }
+zmq-poc-subscriber = { path = "../subscriber" }
+zmq = { workspace = true }
+crossbeam-channel = { workspace = true }

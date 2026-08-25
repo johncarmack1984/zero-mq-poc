@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nickel-org/tauri/dev/crates/tauri-config-schema/schema.json",
+  "productName": "zmq-poc",
+  "identifier": "com.johncarmack.zmq-poc",
+  "build": {
+    "frontendDist": "../src",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "ZeroMQ Market Data",
+        "width": 900,
+        "height": 600,
+        "resizable": true
+      }
+    ]
+  },
+  "bundle": {
+    "active": false,
+    "icon": ["icons/icon.png"]
+  }
+}

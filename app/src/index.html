@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ZeroMQ Market Data</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-size: 13px;
+  }
+  h1 {
+    padding: 12px 16px 8px;
+    font-size: 16px;
+    color: #8be9fd;
+    font-weight: 600;
+  }
+  #grid {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  #grid th {
+    background: #16213e;
+    color: #bd93f9;
+    padding: 6px 10px;
+    text-align: right;
+    border-bottom: 2px solid #0f3460;
+    position: sticky;
+    top: 0;
+  }
+  #grid th:first-child { text-align: left; }
+  #grid td {
+    padding: 4px 10px;
+    text-align: right;
+    border-bottom: 1px solid #16213e;
+    transition: background-color 0.3s ease;
+  }
+  #grid td:first-child { text-align: left; color: #f8f8f2; font-weight: 600; }
+  #grid tr:hover { background: #16213e; }
+  .flash-up { background-color: rgba(80, 250, 123, 0.3) !important; }
+  .flash-down { background-color: rgba(255, 85, 85, 0.2) !important; }
+  .price-up { color: #50fa7b; }
+  .price-down { color: #ff5555; }
+  #metrics {
+    padding: 8px 16px;
+    background: #16213e;
+    color: #6272a4;
+    font-size: 12px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    border-top: 1px solid #0f3460;
+  }
+  #metrics span { margin-right: 16px; }
+  .container { padding-bottom: 36px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>ZeroMQ Market Data Grid</h1>
+  <table id="grid">
+    <thead>
+      <tr>
+        <th style="width:100px">SYMBOL</th>
+        <th style="width:110px">BID</th>
+        <th style="width:110px">ASK</th>
+        <th style="width:110px">LAST</th>
+        <th style="width:80px">SIZE</th>
+        <th style="width:100px">SEQ</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+<div id="metrics">
+  <span id="m-recv">recv: 0</span>
+  <span id="m-flushes">flushes: 0</span>
+  <span id="m-coalesced">coalesced: 0</span>
+  <span id="m-dropped">dropped: 0</span>
+  <span id="m-gaps">gaps: 0</span>
+</div>
+<script>
+const state = {};
+const tbody = document.getElementById('tbody');
+
+function getOrCreateRow(symbol) {
+  if (state[symbol]) return state[symbol];
+  const tr = document.createElement('tr');
+  tr.id = 'row-' + symbol;
+  const cells = {};
+  ['symbol', 'bid', 'ask', 'last', 'size', 'seq'].forEach(col => {
+    const td = document.createElement('td');
+    td.id = symbol + '-' + col;
+    tr.appendChild(td);
+    cells[col] = td;
+  });
+  cells.symbol.textContent = symbol;
+
+  // Insert in sorted order
+  const rows = tbody.children;
+  let inserted = false;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].id > 'row-' + symbol) {
+      tbody.insertBefore(tr, rows[i]);
+      inserted = true;
+      break;
+    }
+  }
+  if (!inserted) tbody.appendChild(tr);
+
+  state[symbol] = { tr, cells, lastPrice: 0 };
+  return state[symbol];
+}
+
+function flashCell(td, direction) {
+  td.classList.add(direction === 'up' ? 'flash-up' : 'flash-down');
+  setTimeout(() => td.classList.remove('flash-up', 'flash-down'), 300);
+}
+
+function applyTick(tick) {
+  const row = getOrCreateRow(tick.symbol);
+  const prev = row.lastPrice;
+  const dir = tick.last > prev ? 'up' : tick.last < prev ? 'down' : null;
+
+  row.cells.bid.textContent = tick.bid.toFixed(4);
+  row.cells.ask.textContent = tick.ask.toFixed(4);
+  row.cells.last.textContent = tick.last.toFixed(4);
+  row.cells.size.textContent = tick.size;
+  row.cells.seq.textContent = tick.seq;
+
+  if (dir && prev !== 0) {
+    const cls = dir === 'up' ? 'price-up' : 'price-down';
+    row.cells.last.className = cls;
+    flashCell(row.cells.last, dir);
+    flashCell(row.cells.bid, dir);
+    flashCell(row.cells.ask, dir);
+  }
+
+  row.lastPrice = tick.last;
+}
+
+// Tauri event listener
+if (window.__TAURI__) {
+  const { listen } = window.__TAURI__.event;
+  const { invoke } = window.__TAURI__.core;
+
+  listen('tick-batch', (event) => {
+    const ticks = event.payload;
+    ticks.forEach(applyTick);
+  });
+
+  setInterval(async () => {
+    try {
+      const m = await invoke('get_metrics');
+      document.getElementById('m-recv').textContent = 'recv: ' + m.received;
+      document.getElementById('m-flushes').textContent = 'flushes: ' + m.flushes;
+      document.getElementById('m-coalesced').textContent = 'coalesced: ' + m.coalesced;
+      document.getElementById('m-dropped').textContent = 'dropped: ' + m.dropped;
+      document.getElementById('m-gaps').textContent = 'gaps: ' + m.gaps;
+    } catch(e) {}
+  }, 1000);
+}
+</script>
+</body>
+</html>

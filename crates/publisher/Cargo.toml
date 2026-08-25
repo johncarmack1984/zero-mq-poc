@@ -1,0 +1,10 @@
+[package]
+name = "zmq-poc-publisher"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+zmq-poc-proto = { workspace = true }
+zmq = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }

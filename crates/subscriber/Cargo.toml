@@ -1,0 +1,11 @@
+[package]
+name = "zmq-poc-subscriber"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+zmq-poc-proto = { workspace = true }
+zmq = { workspace = true }
+crossbeam-channel = { workspace = true }
+clap = { workspace = true }
+anyhow = { workspace = true }

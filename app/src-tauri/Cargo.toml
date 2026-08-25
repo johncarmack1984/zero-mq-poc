@@ -1,0 +1,15 @@
+[package]
+name = "zmq-poc-app"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+zmq-poc-proto = { path = "../../crates/proto" }
+zmq-poc-subscriber = { path = "../../crates/subscriber" }
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+crossbeam-channel = "0.5"
