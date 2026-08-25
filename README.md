@@ -56,23 +56,19 @@ The policy is deliberate drop, not block. A stale tick is worthless in a trading
 
 ## How to run
 
-Prerequisites: Rust toolchain, libzmq (`brew install zeromq` on macOS, `apt install libzmq3-dev` on Ubuntu).
+Prerequisites: Rust toolchain, [just](https://github.com/casey/just) task runner.
 
 ```bash
-# Terminal 1: publisher
-cargo run --release -p zmq-poc-publisher -- --rate 50000 --symbols 20
+just deps          # install libzmq (brew on macOS, apt on Ubuntu)
+just build         # deps + release build
+just demo          # one command: publisher + TUI grid (Ctrl-C stops both)
 
-# Terminal 2: TUI subscriber
-cargo run --release -p zmq-poc-tui
-
-# Or: headless subscriber with printed metrics
-cargo run --release -p zmq-poc-subscriber -- --symbols SYM000,SYM001,SYM002
-
-# Tauri 2 grid (requires Tauri v2 CLI)
-cd app && cargo tauri dev
-
-# Tests
-cargo test
+just check         # fmt + clippy + test
+just test          # tests only
+just pub           # publisher alone (default 50k msg/s, 20 symbols)
+just tui           # TUI subscriber alone
+just sub           # headless subscriber with printed metrics
+just app           # Tauri 2 webview grid (requires tauri CLI)
 ```
 
 ## Crate layout
