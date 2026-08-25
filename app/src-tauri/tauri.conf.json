@@ -3,8 +3,7 @@
   "productName": "zmq-poc",
   "identifier": "com.johncarmack.zmq-poc",
   "build": {
-    "frontendDist": "../src",
-    "devUrl": "http://localhost:1420"
+    "frontendDist": "../src"
   },
   "app": {
     "withGlobalTauri": true,
